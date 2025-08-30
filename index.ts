@@ -9,8 +9,10 @@ import {
   ProfileExtractor,
   GoogleSearchResponse,
   SerpApiResponse,
-  LinkedInProfile
+  LinkedInProfile,
 } from "./search-services.js";
+import dotenv from "dotenv";
+dotenv.config();
 
 // Types and Interfaces
 interface SearchRequest {
@@ -69,12 +71,12 @@ if (TELEGRAM_BOT_TOKEN) {
       profileExtractor
     );
     telegramBot.start();
-    console.log('🤖 Telegram bot initialized and started!');
+    console.log("🤖 Telegram bot initialized and started!");
   } catch (error) {
-    console.error('❌ Failed to initialize Telegram bot:', error);
+    console.error("❌ Failed to initialize Telegram bot:", error);
   }
 } else {
-  console.log('⚠️ Telegram bot token not provided. Telegram bot disabled.');
+  console.log("⚠️ Telegram bot token not provided. Telegram bot disabled.");
 }
 
 // Create Hono app
