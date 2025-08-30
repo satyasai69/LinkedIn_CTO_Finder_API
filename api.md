@@ -16,3 +16,5 @@
 #google search api
 ```curl -X POST http://localhost:3000/api/search/profiles -H "Content-Type: application/json" -d '{"region": "San Francisco", "company_sector": "software", "get_all_pages": true}'```
 ````
+
+csv

@@ -1,10 +1,11 @@
 # LinkedIn CTO Finder API
 
-A TypeScript API built with Bun and Hono framework to find CTOs and technology executives using Google Custom Search.
+A TypeScript API built with Bun and Hono framework to find CTOs and technology executives using Google Custom Search, with integrated Telegram bot support.
 
 ## Features
 
 - 🔍 **Dual Search APIs**: Choose between Google Custom Search API and SerpAPI
+- 🤖 **Telegram Bot Integration**: Interactive bot for easy CTO searches
 - 🔍 Search for CTO and technology executive profiles on LinkedIn
 - 📄 **Pagination support**: Automatically fetches all available pages from Google Search
 - 🎯 Filter by region, company sector, and company type
@@ -13,6 +14,8 @@ A TypeScript API built with Bun and Hono framework to find CTOs and technology e
 - ⚡ Fast performance with Bun runtime
 - 🌐 CORS enabled for web applications
 - 🔄 Rate limiting protection with automatic delays
+- 📁 **CSV Export**: Download search results as CSV files
+- 🐳 **Docker Support**: Easy deployment with Docker and Docker Compose
 
 ## Tech Stack
 
@@ -23,9 +26,12 @@ A TypeScript API built with Bun and Hono framework to find CTOs and technology e
 
 ## Prerequisites
 
-- [Bun](https://bun.sh/) installed on your system
+- [Bun](https://bun.sh/) installed on your system (for local development)
+- **OR** [Docker](https://docker.com/) and Docker Compose (for containerized deployment)
 - Google Custom Search API key
 - Google Custom Search Engine ID
+- (Optional) Telegram Bot Token for bot functionality
+- (Optional) SerpAPI key for alternative search engine
 
 ## Installation
 
@@ -47,6 +53,9 @@ GOOGLE_CSE_ID=your_custom_search_engine_id
 
 # SerpAPI (for /api/search/profiles-serpapi)
 SERPAPI_KEY=your_serpapi_key_here
+
+# Telegram Bot (optional)
+TELEGRAM_BOT_TOKEN=your_telegram_bot_token
 
 PORT=3000
 CORS_ORIGINS=*
@@ -70,6 +79,100 @@ bun run start
 ```bash
 bun run build
 ```
+
+## Docker Deployment
+
+### Using Docker Compose (Recommended)
+
+1. **Clone and setup**:
+```bash
+git clone <repository-url>
+cd LinkedIn_CTO_Finder_API
+cp .env.example .env
+```
+
+2. **Configure environment variables** in `.env`:
+```env
+GOOGLE_API_KEY=your_google_api_key
+GOOGLE_CSE_ID=your_custom_search_engine_id
+SERPAPI_KEY=your_serpapi_key_here
+TELEGRAM_BOT_TOKEN=your_telegram_bot_token
+```
+
+3. **Build and run**:
+```bash
+docker-compose up -d
+```
+
+4. **Check logs**:
+```bash
+docker-compose logs -f
+```
+
+5. **Stop the application**:
+```bash
+docker-compose down
+```
+
+### Using Docker directly
+
+1. **Build the image**:
+```bash
+docker build -t linkedin-cto-finder .
+```
+
+2. **Run the container**:
+```bash
+docker run -d \
+  --name linkedin-cto-finder \
+  -p 3000:3000 \
+  -e GOOGLE_API_KEY=your_google_api_key \
+  -e GOOGLE_CSE_ID=your_custom_search_engine_id \
+  -e SERPAPI_KEY=your_serpapi_key \
+  -e TELEGRAM_BOT_TOKEN=your_telegram_bot_token \
+  -v $(pwd)/temp:/usr/src/app/temp \
+  linkedin-cto-finder
+```
+
+### Health Check
+The application includes a health check endpoint. When using Docker Compose, the service will automatically restart if unhealthy.
+
+```bash
+curl http://localhost:3000
+```
+
+### Docker Setup Testing
+Use the included test script to verify your Docker setup:
+
+```bash
+./docker-test.sh
+```
+
+This script will:
+- ✅ Check if Docker is installed and running
+- 🔨 Build the Docker image
+- 🚀 Test container startup
+- 📝 Create .env from .env.example if needed
+- 💡 Provide next steps and troubleshooting tips
+
+## Telegram Bot
+
+### Setup
+1. **Create a bot** with [@BotFather](https://t.me/BotFather) on Telegram
+2. **Get your bot token** and add it to `.env` as `TELEGRAM_BOT_TOKEN`
+3. **Start the application** - the bot will automatically initialize
+
+### Bot Commands
+- `/start` - Initialize the bot and show welcome message
+- `/help` - Show available commands and usage instructions
+- `/reset` - Reset your current search session
+
+### Bot Features
+- **Interactive Search**: Step-by-step guided search with inline keyboards
+- **Multiple Filters**: Region, company sector, company type, and company size
+- **CSV Export**: Download search results as CSV files
+- **Session Management**: Maintains search state per user
+- **Error Handling**: Graceful error messages and recovery
 
 ## API Endpoints
 
