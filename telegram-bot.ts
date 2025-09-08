@@ -8,8 +8,9 @@ import { LinkedInProfileSearchService, SerpApiSearchService, ProfileExtractor } 
 
 interface UserSession {
   chatId: number;
-  step: 'start' | 'region' | 'sector' | 'company_type' | 'company_size' | 'search_method' | 'searching' | 'results';
+  step: 'start' | 'job_title' | 'region' | 'sector' | 'company_type' | 'company_size' | 'search_method' | 'searching' | 'results';
   searchParams: {
+    job_title?: string;
     region?: string;
     company_sector?: string;
     company_type?: string;
@@ -25,7 +26,7 @@ interface BotResponse {
   isMultipleChoice?: boolean;
 }
 
-class TelegramCTOBot {
+class TelegramExecutiveBot {
   private bot: TelegramBot;
   private userSessions: Map<number, UserSession> = new Map();
   private searchService: LinkedInProfileSearchService;
@@ -78,35 +79,34 @@ class TelegramCTOBot {
   private async handleStart(chatId: number) {
     const session: UserSession = {
       chatId,
-      step: 'start',
+      step: 'job_title',
       searchParams: {}
     };
     
     this.userSessions.set(chatId, session);
     
-    const welcomeMessage = `🔍 Welcome to LinkedIn CTO Finder Bot!
+    const welcomeMessage = `🔍 Welcome to LinkedIn Executive Finder Bot!
 
-I'll help you find CTOs and technology executives based on your criteria.
+I'll help you find executives and professionals based on your criteria.
 
-Let's start by selecting your target region:`;
+💼 First, please tell me what job title you're looking for:
+
+Examples:
+• CTO
+• CEO
+• VP of Engineering
+• Head of Technology
+• Software Engineer
+• Product Manager
+• Data Scientist
+
+Just type the job title you want to search for:`;
     
-    const keyboard = {
-      inline_keyboard: [
-        [{ text: '🌍 Global', callback_data: 'region_global' }],
-        [{ text: '🇺🇸 United States', callback_data: 'region_united_states' }],
-        [{ text: '🇪🇺 Europe', callback_data: 'region_europe' }],
-        [{ text: '🇦🇸 Asia', callback_data: 'region_asia' }],
-        [{ text: '🇨🇦 Canada', callback_data: 'region_canada' }],
-        [{ text: '🇦🇺 Australia', callback_data: 'region_australia' }],
-        [{ text: '⏭️ Skip Region', callback_data: 'region_skip' }]
-      ]
-    };
-    
-    await this.bot.sendMessage(chatId, welcomeMessage, { reply_markup: keyboard });
+    await this.bot.sendMessage(chatId, welcomeMessage);
   }
 
   private async handleHelp(chatId: number) {
-    const helpMessage = `🤖 LinkedIn CTO Finder Bot Help
+    const helpMessage = `🤖 LinkedIn Executive Finder Bot Help
 
 📋 Available Commands:
 /start - Start a new search
@@ -114,12 +114,19 @@ Let's start by selecting your target region:`;
 /reset - Reset current search session
 
 🔍 How it works:
-1. Choose your target region
-2. Select company sector
-3. Pick company type
-4. Choose company size
-5. Select search method
-6. Get results and download CSV
+1. Enter the job title you want to search for
+2. Choose your target region
+3. Select company sector
+4. Pick company type
+5. Choose company size
+6. Select search method
+7. Get results and download CSV
+
+💼 Supported Job Titles:
+- CTO, CEO, VP of Engineering
+- Software Engineer, Product Manager
+- Data Scientist, Tech Lead
+- Any other professional title
 
 💡 Tips:
 - You can skip any step if not relevant
@@ -282,6 +289,7 @@ Let's start by selecting your target region:`;
 
   private generateSearchSummary(params: any): string {
     let summary = '📋 Search Criteria:\n';
+    summary += `💼 Job Title: ${params.job_title || 'Not specified'}\n`;
     summary += `🌍 Region: ${params.region || 'Not specified'}\n`;
     summary += `🏢 Sector: ${params.company_sector || 'Not specified'}\n`;
     summary += `🏭 Company Type: ${params.company_type || 'Not specified'}\n`;
@@ -292,41 +300,48 @@ Let's start by selecting your target region:`;
 
   private async performSearch(chatId: number, session: UserSession) {
     try {
-      const { region, company_sector, company_type, search_method } = session.searchParams;
+      const { job_title, region, company_sector, company_type, search_method } = session.searchParams;
+      
+      if (!job_title) {
+        await this.bot.sendMessage(chatId, '❌ Job title is required for search. Please use /start to begin again.');
+        return;
+      }
       
       let searchResponse;
       let profiles;
       
       if (search_method === 'google') {
-        searchResponse = await this.searchService.searchCtoProfiles(
+        searchResponse = await this.searchService.searchProfiles(
+          job_title,
           region,
           company_sector,
           company_type,
           undefined,
           true
         );
-        profiles = this.profileExtractor.extractProfiles(searchResponse, `${region} ${company_sector} ${company_type}`);
+        profiles = this.profileExtractor.extractProfiles(searchResponse, `${job_title} ${region} ${company_sector} ${company_type}`);
       } else {
-        searchResponse = await this.serpApiService.searchCtoProfiles(
+        searchResponse = await this.serpApiService.searchProfiles(
+          job_title,
           region,
           company_sector,
           company_type,
           undefined,
           true
         );
-        profiles = this.profileExtractor.extractProfilesFromSerpApi(searchResponse, `${region} ${company_sector} ${company_type}`);
+        profiles = this.profileExtractor.extractProfilesFromSerpApi(searchResponse, `${job_title} ${region} ${company_sector} ${company_type}`);
       }
       
       session.results = profiles;
       session.step = 'results';
       
       if (profiles.length === 0) {
-        await this.bot.sendMessage(chatId, '❌ No CTOs found with your criteria. Try adjusting your search parameters and use /start to search again.');
+        await this.bot.sendMessage(chatId, `❌ No ${job_title} profiles found with your criteria. Try adjusting your search parameters and use /start to search again.`);
         return;
       }
       
       // Send results summary
-      const resultsMessage = `✅ Search completed!\n\n📊 Found ${profiles.length} CTO profiles\n\n🔝 Top 3 Results:\n${this.formatTopResults(profiles.slice(0, 3))}`;
+      const resultsMessage = `✅ Search completed!\n\n📊 Found ${profiles.length} ${job_title} profiles\n\n🔝 Top 3 Results:\n${this.formatTopResults(profiles.slice(0, 3))}`;
       
       const keyboard = {
         inline_keyboard: [
@@ -355,7 +370,8 @@ Let's start by selecting your target region:`;
   private async generateAndSendCSV(chatId: number, profiles: any[], searchParams: any) {
     try {
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-      const filename = `cto-search-results-${timestamp}.csv`;
+      const jobTitleForFilename = (searchParams.job_title || 'executive').toLowerCase().replace(/[^a-z0-9]/g, '-');
+      const filename = `${jobTitleForFilename}-search-results-${timestamp}.csv`;
       const filepath = path.join(process.cwd(), 'temp', filename);
       
       // Ensure temp directory exists
@@ -394,7 +410,7 @@ Let's start by selecting your target region:`;
       
       // Send the CSV file
       await this.bot.sendDocument(chatId, filepath, {
-        caption: `📊 Your CTO search results (${profiles.length} profiles)\n\n🔍 Search criteria:\n${this.generateSearchSummary(searchParams)}`
+        caption: `📊 Your ${searchParams.job_title || 'executive'} search results (${profiles.length} profiles)\n\n🔍 Search criteria:\n${this.generateSearchSummary(searchParams)}`
       });
       
       // Clean up the temporary file
@@ -415,12 +431,47 @@ Let's start by selecting your target region:`;
     const session = this.userSessions.get(chatId);
     
     if (!session) {
-      await this.bot.sendMessage(chatId, '👋 Hi! Use /start to begin searching for CTOs, or /help for more information.');
+      await this.bot.sendMessage(chatId, '👋 Hi! Use /start to begin searching for executives, or /help for more information.');
       return;
     }
     
-    // Handle any text input during the process
-    await this.bot.sendMessage(chatId, '🤖 Please use the buttons provided to navigate through the search process. If you\'re stuck, use /reset to start over or /help for assistance.');
+    // Handle job title input
+    if (session.step === 'job_title' && msg.text) {
+      const jobTitle = msg.text.trim();
+      if (jobTitle.length < 2) {
+        await this.bot.sendMessage(chatId, '❌ Please enter a valid job title (at least 2 characters).');
+        return;
+      }
+      
+      session.searchParams.job_title = jobTitle;
+      session.step = 'region';
+      
+      await this.bot.sendMessage(chatId, `✅ Job title set: "${jobTitle}"
+
+Now, let's select your target region:`);
+      
+      const keyboard = {
+        inline_keyboard: [
+          [{ text: '🌍 Global', callback_data: 'region_global' }],
+          [{ text: '🇺🇸 United States', callback_data: 'region_united_states' }],
+          [{ text: '🇪🇺 Europe', callback_data: 'region_europe' }],
+          [{ text: '🇦🇸 Asia', callback_data: 'region_asia' }],
+          [{ text: '🇨🇦 Canada', callback_data: 'region_canada' }],
+          [{ text: '🇦🇺 Australia', callback_data: 'region_australia' }],
+          [{ text: '⏭️ Skip Region', callback_data: 'region_skip' }]
+        ]
+      };
+      
+      await this.bot.sendMessage(chatId, 'Please select a region:', { reply_markup: keyboard });
+      return;
+    }
+    
+    // Handle any other text input during the process
+    if (session.step === 'job_title') {
+      await this.bot.sendMessage(chatId, '💼 Please type the job title you want to search for.');
+    } else {
+      await this.bot.sendMessage(chatId, '🤖 Please use the buttons provided to navigate through the search process. If you\'re stuck, use /reset to start over or /help for assistance.');
+    }
   }
 
   public start() {
@@ -433,4 +484,4 @@ Let's start by selecting your target region:`;
   }
 }
 
-export { TelegramCTOBot };
+export { TelegramExecutiveBot };

@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 import { serve } from "@hono/node-server";
-import { TelegramCTOBot } from "./telegram-bot.js";
+import { TelegramExecutiveBot } from "./telegram-bot.js";
 import {
   LinkedInProfileSearchService,
   SerpApiSearchService,
@@ -61,10 +61,10 @@ const serpApiService = new SerpApiSearchService(SERPAPI_KEY);
 const profileExtractor = new ProfileExtractor();
 
 // Initialize Telegram bot if token is provided
-let telegramBot: TelegramCTOBot | null = null;
+let telegramBot: TelegramExecutiveBot | null = null;
 if (TELEGRAM_BOT_TOKEN) {
   try {
-    telegramBot = new TelegramCTOBot(
+    telegramBot = new TelegramExecutiveBot(
       TELEGRAM_BOT_TOKEN,
       searchService,
       serpApiService,

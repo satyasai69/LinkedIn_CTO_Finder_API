@@ -12,8 +12,8 @@ services:
       - SERPAPI_KEY=${SERPAPI_KEY}
       - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
     volumes:
-      # Mount temp directory for CSV files
-      - ./temp:/usr/src/app/temp
+      # Use named volume for CSV files to avoid permission issues
+      - csv_data:/usr/src/app/temp
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000"]
@@ -35,5 +35,5 @@ services:
   #   restart: unless-stopped
 
 volumes:
-  temp_data:
+  csv_data:
     driver: local

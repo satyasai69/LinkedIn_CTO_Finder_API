@@ -45,6 +45,43 @@ class LinkedInProfileSearchService {
     this.baseUrl = GOOGLE_SEARCH_URL;
   }
 
+  async searchProfiles(
+    jobTitle: string,
+    region?: string,
+    companySector?: string,
+    companyType?: string,
+    additionalTitles?: string[],
+    getAllPages: boolean = true
+  ): Promise<GoogleSearchResponse> {
+    // Use the provided job title for search
+    const titleQuery = `"${jobTitle}"`;
+
+    // Construct complete search query
+    const queryParts = ["site:linkedin.com/in/", `(${titleQuery})`];
+
+    // Add optional filters
+    if (region) {
+      queryParts.push(`"${region}"`);
+    }
+
+    if (companySector) {
+      queryParts.push(`"${companySector}"`);
+    }
+
+    if (companyType) {
+      queryParts.push(`"${companyType}"`);
+    }
+
+    const query = queryParts.join(" ");
+    console.log(`🔍 Google Search Query: ${query}`);
+
+    if (getAllPages) {
+      return this.executeSearchAllPages(query);
+    } else {
+      return this.executeSearch(query, 10);
+    }
+  }
+
   async searchCtoProfiles(
     region?: string,
     companySector?: string,
@@ -360,6 +397,43 @@ class SerpApiSearchService {
   constructor(apiKey: string) {
     this.apiKey = apiKey;
     this.baseUrl = SERPAPI_URL;
+  }
+
+  async searchProfiles(
+    jobTitle: string,
+    region?: string,
+    companySector?: string,
+    companyType?: string,
+    additionalTitles?: string[],
+    getAllPages: boolean = true
+  ): Promise<SerpApiResponse> {
+    // Use the provided job title for search
+    const titleQuery = `"${jobTitle}"`;
+
+    // Construct complete search query
+    const queryParts = ["site:linkedin.com/in/", `(${titleQuery})`];
+
+    // Add optional filters
+    if (region) {
+      queryParts.push(`"${region}"`);
+    }
+
+    if (companySector) {
+      queryParts.push(`"${companySector}"`);
+    }
+
+    if (companyType) {
+      queryParts.push(`"${companyType}"`);
+    }
+
+    const query = queryParts.join(" ");
+    console.log(`🔍 SerpAPI Search Query: ${query}`);
+
+    if (getAllPages) {
+      return this.executeSearchAllPages(query);
+    } else {
+      return this.executeSearch(query, 10);
+    }
   }
 
   async searchCtoProfiles(

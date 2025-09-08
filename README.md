@@ -114,6 +114,22 @@ docker-compose logs -f
 docker-compose down
 ```
 
+### Troubleshooting Docker Permissions (VPS)
+
+If you encounter CSV generation permission errors on a VPS:
+
+```bash
+# Quick fix - rebuild with proper permissions
+./fix-permissions.sh
+
+# Or manually:
+docker-compose down
+docker-compose build --no-cache
+docker-compose up -d
+```
+
+The application now uses named volumes to avoid permission issues. CSV files are stored in the `csv_data` volume with proper permissions.
+
 ### Using Docker directly
 
 1. **Build the image**:

@@ -17,8 +17,11 @@ ENV NODE_ENV=production
 # [optional] tests & build
 RUN bun run build || echo "No build script found, skipping..."
 
-# Create temp directory for CSV files
-RUN mkdir -p /usr/src/app/temp
+# Create temp directory for CSV files with proper permissions
+RUN mkdir -p /usr/src/app/temp && \
+    chown -R bun:bun /usr/src/app && \
+    chmod -R 755 /usr/src/app && \
+    chmod -R 777 /usr/src/app/temp
 
 # Expose port
 EXPOSE 3000

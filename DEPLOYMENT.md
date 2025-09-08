@@ -62,6 +62,17 @@ docker-compose up -d --build
 docker-compose ps
 ```
 
+### VPS Deployment Notes
+
+When deploying on a VPS, the application uses named volumes to avoid permission issues with CSV file generation:
+
+- **Named Volume**: `csv_data` is automatically created with proper permissions
+- **No Manual Setup**: No need to create local temp directories
+- **Persistent Data**: CSV files persist across container restarts
+- **Permission Handling**: Container runs as `bun` user with proper temp directory permissions
+
+If you encounter permission errors, ensure you're using the latest docker-compose.yml configuration.
+
 ## 🚀 Production Deployment
 
 ### Using Docker Compose with Nginx (Recommended)
@@ -233,6 +244,18 @@ docker-compose logs linkedin-cto-finder > app.log
    # Check bot token is correct
    # Verify bot is not already running elsewhere
    # Check application logs
+   ```
+
+5. **CSV generation permission errors on VPS**:
+   ```bash
+   # Error: EACCES: permission denied
+   # Solution: Use named volumes (already configured)
+   docker-compose down
+   docker-compose up -d
+   
+   # If still having issues, check volume permissions:
+   docker volume ls
+   docker volume inspect linkedin_cto_finder_api_csv_data
    ```
 
 ### Getting Help
